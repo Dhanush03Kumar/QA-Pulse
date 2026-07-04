@@ -17,10 +17,9 @@ Figma. Only add: state, props, event handlers, data fetching/wiring,
 conditional rendering logic (e.g. loading/empty/error states) using the
 SAME markup pattern already present. If you believe visual/structural
 change is genuinely required, stop and flag it explicitly in the plan —
-don't silently restyle.
-Before proposing any new file, search the codebase for existing
-files/components/services that already do this or something similar.
-Prefer extending an existing file over creating a new one.
+don't silently restyle. Before proposing any new file, search the codebase
+for existing files/components/services that already do this or something
+similar. Prefer extending an existing file over creating a new one.
 
 ## Step 3 — Propose a plan, then stop
 Present:
@@ -40,8 +39,8 @@ check-ins, unless you hit something genuinely ambiguous. Stay strictly
 within the approved file list.
 
 ## Step 5 — Verify by actually running the build, not by reading
-1. Run the type-check command (e.g. `npx tsc --noEmit`) — show actual output.
-2. Run the build command (e.g. `npm run build`) — show actual output.
+1. Change to the project root directory (by executing: dir="$PWD"; while [ ! -f "$dir/package.json" ] && [ ! -f "$dir/tsconfig.json" ] && [ "$dir" != "/" ]; do dir=$(dirname "$dir"); done; cd "$dir") and run the project's type-check command (e.g. `npx tsc --noEmit`) — show full actual output.
+2. Change to the project root directory (by executing: dir="$PWD"; while [ ! -f "$dir/package.json" ] && [ ! -f "$dir/tsconfig.json" ] && [ "$dir" != "/" ]; do dir=$(dirname "$dir"); done; cd "$dir") and run the build command (e.g. `npm run build`) — show full actual output.
 3. Only report success if both actually pass, with evidence shown.
 
 ## Step 6 — Report cleanly

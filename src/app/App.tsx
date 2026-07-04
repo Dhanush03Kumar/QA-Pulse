@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, Cell,
 } from "recharts";
 
-import { exportDatabase, importDatabase } from "../lib/database";
+import { exportDatabase, importDatabase, getTasks, addTask, updateTask, getActivities, addActivity } from "../lib/database";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./components/ui/dialog";
 
 // --- Types ------------------------------------------------------------------
@@ -146,6 +146,12 @@ const EXECUTION_TREND = [
   { date: "Jun 27", passed: 231, failed: 11 },
 ];
 
+
+// Helper to format date as "YYYY-MM-DD HH:mm"
+function formatTimestamp(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 // --- Utility Components -------------------------------------------------------
 
 const priorityCfg: Record<Priority, { label: string; cls: string }> = {
@@ -1312,27 +1318,132 @@ export default function App() {
   const [nav, setNav] = useState<NavItem>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState("");
-  const [tasks, setTasks] = useState<Task[]>(INIT_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activities, setActivities] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     document.documentElement.style.fontFamily = "'Inter', system-ui, sans-serif";
   }, [dark]);
+  // Load data from database
+  const loadData = async () => {
+    try {
+      const dbTasks = await getTasks();
+      // Map database tasks to app Task format
+      const mappedTasks: Task[] = dbTasks.map(t => ({
+        ...t,
+        id: String(t.id)
+      }));
+      setTasks(mappedTasks);
 
-  const addTask = (t: Omit<Task, "id">) => setTasks(p => [{ ...t, id: String(Date.now()) }, ...p]);
-  const updateTask = (id: string, u: Partial<Task>) => setTasks(p => p.map(t => t.id === id ? { ...t, ...u } : t));
+      const dbActivities = await getActivities();
+      // Map database activities to app ActivityEntry format
+      const mappedActivities: ActivityEntry[] = dbActivities.map(a => ({
+        ...a,
+        id: String(a.id)
+      }));
+      setActivities(mappedActivities);
+    } catch (error) {
+      console.error('Failed to load data from database:', error);
+      // Fallback to sample data if database fails
+      setTasks(INIT_TASKS);
+      setActivities(SAMPLE_ACTIVITIES);
+    }
+  };
+
+  // Load data on initial load
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Add a new task
+  const handleAddTask = async (t: Omit<Task, "id">) => {
+  try {
+    // Add task to database
+    const dbTask = await addTask(t);
+    
+    // Add activity log
+    await addActivity({
+      action: "Task added",
+      module: "Tasks",
+      timestamp: formatTimestamp(new Date()),
+      details: `Added "${t.title}" to task backlog`
+    });
+    
+    // Reload data to update state
+    await loadData();
+  } catch (error) {
+    console.error("Failed to add task:", error);
+    // Fallback to optimistic update
+    setTasks(p => [{ ...t, id: String(Date.now()) }, ...p]);
+  }
+};
+
+  // Update an existing task
+  const handleUpdateTask = async (id: string, u: Partial<Task>) => {
+  try {
+    const numericId = Number(id);
+    
+    // Get the current task to check if status changed
+    const currentTask = tasks.find(t => t.id === id);
+    
+    // Update task in database
+    await updateTask(numericId, u);
+    
+    // If status changed, add activity log
+    if (u.status && currentTask?.status !== u.status) {
+      let action: string;
+      let details: string;
+      switch (u.status) {
+        case "in-progress":
+          action = "Task started";
+          details = `Task "${currentTask.title}" started`;
+          break;
+        case "done":
+          action = "Task completed";
+          details = `Task "${currentTask.title}" marked as done`;
+          break;
+        case "blocked":
+          action = "Task blocked";
+          details = `Task "${currentTask.title}" blocked`;
+          break;
+        case "todo":
+          action = "Task reopened";
+          details = `Task "${currentTask.title}" reopened`;
+          break;
+        default:
+          action = "Task updated";
+          details = `Task "${currentTask.title}" updated`;
+      }
+      
+      await addActivity({
+        action,
+        module: "Tasks",
+        timestamp: formatTimestamp(new Date()),
+        details
+      });
+    }
+    
+    // Reload data to update state
+    await loadData();
+  } catch (error) {
+    console.error("Failed to update task:", error);
+    // Fallback to optimistic update
+    setTasks(p => p.map(t => t.id === id ? { ...t, ...u } : t));
+  }
+};
 
   const renderPage = () => {
     switch (nav) {
-      case "dashboard": return <Dashboard tasks={tasks} defects={SAMPLE_DEFECTS} meetings={SAMPLE_MEETINGS} projects={SAMPLE_PROJECTS} templates={SAMPLE_TEMPLATES} activities={SAMPLE_ACTIVITIES} />;
-      case "tasks": return <TasksPage tasks={tasks} onAdd={addTask} onUpdate={updateTask} />;
+      case "dashboard": return <Dashboard tasks={tasks} defects={SAMPLE_DEFECTS} meetings={SAMPLE_MEETINGS} projects={SAMPLE_PROJECTS} templates={SAMPLE_TEMPLATES} activities={activities} />;
+      case "tasks": return <TasksPage tasks={tasks} onAdd={handleAddTask} onUpdate={handleUpdateTask} />;
       case "knowledge": return <KnowledgeBasePage entries={SAMPLE_KB} />;
       case "templates": return <MailTemplatesPage templates={SAMPLE_TEMPLATES} />;
       case "meetings": return <MeetingsPage meetings={SAMPLE_MEETINGS} />;
       case "defects": return <DefectsPage defects={SAMPLE_DEFECTS} />;
       case "projects": return <ProjectsPage projects={SAMPLE_PROJECTS} />;
       case "automation": return <AutomationHubPage />;
-      case "activity": return <ActivityLogPage activities={SAMPLE_ACTIVITIES} />;
+      case "activity": return <ActivityLogPage activities={activities} />;
     }
   };
 
@@ -1348,4 +1459,5 @@ export default function App() {
     </div>
   );
 }
+
 

@@ -10,9 +10,8 @@ does not repair. If the user wants a fix, they should use /fix-error or
 /build-feature instead.
 
 ## Mandatory steps, in order
-1. Run the project's type-check command (e.g. `npx tsc --noEmit`) — show
-   full actual output.
-2. Run the build command (e.g. `npm run build`) — show full actual output.
+1. Change to the project root directory (by executing: dir="$PWD"; while [ ! -f "$dir/package.json" ] && [ ! -f "$dir/tsconfig.json" ] && [ "$dir" != "/" ]; do dir=$(dirname "$dir"); done; cd "$dir") and run the project's type-check command (e.g. `npx tsc --noEmit`) — show full actual output.
+2. Change to the project root directory (by executing: dir="$PWD"; while [ ! -f "$dir/package.json" ] && [ ! -f "$dir/tsconfig.json" ] && [ "$dir" != "/" ]; do dir=$(dirname "$dir"); done; cd "$dir") and run the build command (e.g. `npm run build`) — show full actual output.
 3. Only after 1-2, do a logic-level read-through of the scope below: null
    safety, correct helper usage, conditional rendering, scope compliance
    with docs/CLAUDE.md.

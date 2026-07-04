@@ -15,9 +15,7 @@ is a CLAIM, not evidence — verify it yourself.
    against what the summary claims was changed. Flag any mismatch
    immediately (files touched that weren't mentioned, or claimed changes
    that aren't actually in the diff).
-2. Re-run `npx tsc --noEmit` and the build command yourself, even if the
-   summary already claims they passed. Show your own output. If the
-   summary's claimed output doesn't match what you get, that's an
+2. Change to the project root directory (by executing: dir="$PWD"; while [ ! -f "$dir/package.json" ] && [ ! -f "$dir/tsconfig.json" ] && [ "$dir" != "/" ]; do dir=$(dirname "$dir"); done; cd "$dir") and re-run `npx tsc --noEmit` and the build command yourself, even if the summary already claims they passed. Show your own output. If the summary's claimed output doesn't match what you get, that's an
    automatic REJECT.
 
 ## Step 2 — Check against the original ask
