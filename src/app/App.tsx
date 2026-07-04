@@ -403,7 +403,7 @@ function Dashboard({ tasks, defects, meetings, projects, templates, activities }
   const daysLeft = Math.ceil((new Date(active.releaseDate).getTime() - Date.now()) / 86400000);
 
   return (
-    <div className="p-6 space-y-5 overflow-y-auto">
+    <div className="h-full p-6 space-y-5 overflow-y-auto">
       <div>
         <h1 className="text-xl font-semibold">Good morning ??</h1>
         <p className="text-[13px] text-muted-foreground mt-0.5">Friday, June 27, 2026 � {tasks.filter(t => t.status !== "done").length} tasks pending</p>
@@ -826,7 +826,7 @@ function MailTemplatesPage({ templates }: { templates: Template[] }) {
   };
 
   return (
-    <div className="p-6">
+    <div className="h-full p-6 overflow-y-auto">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold">Mail Templates</h1>
@@ -899,7 +899,7 @@ function MeetingsPage({ meetings }: { meetings: Meeting[] }) {
   const allActions = meetings.flatMap(m => m.actionItems.map(a => ({ action: a, meeting: m.title, date: m.date })));
 
   return (
-    <div className="p-6">
+    <div className="h-full p-6 overflow-y-auto">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-semibold">Meetings</h1>
         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors"><Plus className="w-4 h-4" /> Schedule</button>
@@ -1107,7 +1107,7 @@ function ProjectsPage({ projects }: { projects: Project[] }) {
   ] : [];
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="h-full p-6 space-y-5 overflow-y-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Projects & Releases</h1>
         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors"><Plus className="w-4 h-4" /> New Project</button>
@@ -1177,7 +1177,7 @@ function AutomationHubPage() {
   const overall = Math.round((totalAuto / totalAll) * 100);
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="h-full p-6 space-y-5 overflow-y-auto">
       <h1 className="text-xl font-semibold">Automation Hub</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPI label="Overall Coverage" value={`${overall}%`} sub={`${totalAuto}/${totalAll} tests`} color="text-indigo-400" />
@@ -1265,7 +1265,7 @@ function ActivityLogPage({ activities }: { activities: ActivityEntry[] }) {
   const filtered = moduleFilter === "all" ? activities : activities.filter(a => a.module === moduleFilter);
 
   return (
-    <div className="p-6">
+    <div className="h-full p-6 overflow-y-auto">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold">Activity Log</h1>
