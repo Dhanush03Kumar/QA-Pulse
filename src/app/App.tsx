@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   LayoutDashboard, CheckSquare, BookOpen, Mail, Calendar, Bug,
   FolderKanban, Cpu, Activity, ChevronLeft, ChevronRight,
@@ -62,9 +62,9 @@ interface ActivityEntry {
 
 const INIT_TASKS: Task[] = [
   { id: "1", title: "Write regression test suite for checkout flow", priority: "high", status: "in-progress", dueDate: "2026-07-02", project: "E-Commerce v3.2", description: "Complete regression coverage for the new checkout redesign including payment gateway changes.", tags: ["regression", "checkout"] },
-  { id: "2", title: "Verify payment gateway integration � Stripe v4", priority: "critical", status: "todo", dueDate: "2026-06-28", project: "E-Commerce v3.2", description: "Test all Stripe v4 API endpoints including webhooks and refund flows.", tags: ["integration", "payment"] },
+  { id: "2", title: "Verify payment gateway integration ï¿½ Stripe v4", priority: "critical", status: "todo", dueDate: "2026-06-28", project: "E-Commerce v3.2", description: "Test all Stripe v4 API endpoints including webhooks and refund flows.", tags: ["integration", "payment"] },
   { id: "3", title: "Update test data for new user roles", priority: "medium", status: "done", dueDate: "2026-06-25", project: "Auth Service 2.1", description: "Create test accounts for the 3 new permission tiers in Auth Service.", tags: ["test-data", "auth"] },
-  { id: "4", title: "Performance testing � API response times", priority: "high", status: "blocked", dueDate: "2026-07-05", project: "E-Commerce v3.2", description: "Load test API endpoints under 1000 concurrent users. Blocked on staging environment.", tags: ["performance", "api"] },
+  { id: "4", title: "Performance testing ï¿½ API response times", priority: "high", status: "blocked", dueDate: "2026-07-05", project: "E-Commerce v3.2", description: "Load test API endpoints under 1000 concurrent users. Blocked on staging environment.", tags: ["performance", "api"] },
   { id: "5", title: "Smoke test production deployment", priority: "critical", status: "todo", dueDate: "2026-06-27", project: "Auth Service 2.1", description: "Post-deployment smoke test checklist for prod release.", tags: ["smoke", "production"] },
   { id: "6", title: "Document SQL queries for reports module", priority: "low", status: "in-progress", dueDate: "2026-07-10", project: "Analytics Dashboard", description: "Document all custom SQL queries used in the reporting module.", tags: ["documentation", "sql"] },
   { id: "7", title: "Cross-browser compatibility check", priority: "medium", status: "todo", dueDate: "2026-07-08", project: "E-Commerce v3.2", description: "Test on Chrome, Firefox, Safari, Edge for all critical user flows.", tags: ["compatibility", "browser"] },
@@ -73,9 +73,9 @@ const INIT_TASKS: Task[] = [
 
 const SAMPLE_DEFECTS: Defect[] = [
   { id: "1", defectId: "BUG-1042", summary: "Checkout fails when applying multiple discount codes", severity: "critical", status: "open", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta", createdAt: "2026-06-25", rca: "Race condition in discount validation service when processing concurrent coupon API calls.", workaround: "Apply coupons one at a time with a 2-second delay between applications.", lessonsLearned: "Add concurrency tests for all discount/promo flows going forward." },
-  { id: "2", defectId: "BUG-1038", summary: "PDF invoice generation fails for orders >100 items", severity: "major", status: "in-progress", project: "E-Commerce v3.2", assignee: "Dev: Priya Nair", createdAt: "2026-06-23", rca: "Memory overflow in PDF library � no pagination for large item sets.", workaround: "Generate invoices manually via admin panel for orders exceeding 100 items.", lessonsLearned: "Test boundary conditions for all document generation functions." },
+  { id: "2", defectId: "BUG-1038", summary: "PDF invoice generation fails for orders >100 items", severity: "major", status: "in-progress", project: "E-Commerce v3.2", assignee: "Dev: Priya Nair", createdAt: "2026-06-23", rca: "Memory overflow in PDF library ï¿½ no pagination for large item sets.", workaround: "Generate invoices manually via admin panel for orders exceeding 100 items.", lessonsLearned: "Test boundary conditions for all document generation functions." },
   { id: "3", defectId: "BUG-1031", summary: "OAuth token refresh fails silently on mobile Safari", severity: "major", status: "resolved", project: "Auth Service 2.1", assignee: "Dev: Ravi Shankar", createdAt: "2026-06-20", rca: "Safari blocks third-party cookies by default; token refresh relied on cookie-based session.", workaround: "Users must re-login after token expiry on mobile Safari.", lessonsLearned: "Always test auth flows on Safari with default ITP settings enabled." },
-  { id: "4", defectId: "BUG-1027", summary: "Dashboard charts not loading on slow connections (<3G)", severity: "minor", status: "open", project: "Analytics Dashboard", assignee: "Dev: Sneha Patel", createdAt: "2026-06-18", rca: "No lazy loading or skeleton states � charts block render on slow network.", workaround: "None � charts fail to load for users on slow connections.", lessonsLearned: "Implement skeleton loading states for all chart components." },
+  { id: "4", defectId: "BUG-1027", summary: "Dashboard charts not loading on slow connections (<3G)", severity: "minor", status: "open", project: "Analytics Dashboard", assignee: "Dev: Sneha Patel", createdAt: "2026-06-18", rca: "No lazy loading or skeleton states ï¿½ charts block render on slow network.", workaround: "None ï¿½ charts fail to load for users on slow connections.", lessonsLearned: "Implement skeleton loading states for all chart components." },
   { id: "5", defectId: "BUG-1019", summary: "Export CSV truncates rows > 10,000 records", severity: "major", status: "closed", project: "Analytics Dashboard", assignee: "Dev: Kiran Rao", createdAt: "2026-06-14", rca: "CSV export hard-coded limit of 10k rows; not documented in UI.", workaround: "Use date-range filters to export in batches under 10k rows.", lessonsLearned: "Document all export limits in UI; implement streaming for large exports." },
   { id: "6", defectId: "BUG-1055", summary: "Search autocomplete returns stale results after profile update", severity: "minor", status: "reopened", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta", createdAt: "2026-06-26", rca: "Redis cache not invalidated on profile update.", workaround: "Hard refresh browser to clear local cache.", lessonsLearned: "Cache invalidation strategy must be part of feature design review." },
 ];
@@ -90,20 +90,20 @@ const SAMPLE_TEMPLATES: Template[] = [
 ];
 
 const SAMPLE_MEETINGS: Meeting[] = [
-  { id: "1", title: "Sprint 24 Planning", date: "2026-06-30", time: "10:00 AM", type: "planning", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)", "Sneha (Dev)"], notes: "Sprint 24 runs July 1�14. Focus on E-Commerce v3.2 checkout revamp and Auth Service hardening.", actionItems: ["Prepare test plan for checkout revamp", "Review Auth Service test cases with dev team", "Set up test environment by EOD July 1"], status: "upcoming" },
-  { id: "2", title: "Daily Standup", date: "2026-06-27", time: "09:30 AM", type: "standup", attendees: ["You", "Arjun (Dev)", "Priya (Dev)", "Rahul (PM)"], notes: "Blockers: Staging environment down. BUG-1042 critical � escalated.", actionItems: ["Follow up with DevOps on staging env", "Retest BUG-1038 fix by EOD"], status: "upcoming" },
-  { id: "3", title: "Release Review � E-Commerce v3.2", date: "2026-07-05", time: "02:00 PM", type: "review", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Kiran (DevOps)", "Manager"], notes: "", actionItems: ["Prepare test metrics report", "List all known issues with severity", "Demo critical flows"], status: "upcoming" },
-  { id: "4", title: "Sprint 23 Retrospective", date: "2026-06-26", time: "04:00 PM", type: "retrospective", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)"], notes: "What went well: Early defect detection on auth module. What to improve: Test environment stability � need a dedicated QA env. Action: DevOps to provision dedicated QA instance.", actionItems: ["Document retrospective learnings in KB", "Share env request with DevOps"], status: "completed" },
-  { id: "5", title: "QA + Dev Sync � Payment Integration", date: "2026-06-25", time: "11:00 AM", type: "standup", attendees: ["You", "Arjun (Dev)", "Priya (Dev)"], notes: "Reviewed Stripe v4 migration scope. 14 new test scenarios identified for the payment gateway.", actionItems: ["Write 14 new Stripe test cases", "Add to regression suite"], status: "completed" },
+  { id: "1", title: "Sprint 24 Planning", date: "2026-06-30", time: "10:00 AM", type: "planning", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)", "Sneha (Dev)"], notes: "Sprint 24 runs July 1ï¿½14. Focus on E-Commerce v3.2 checkout revamp and Auth Service hardening.", actionItems: ["Prepare test plan for checkout revamp", "Review Auth Service test cases with dev team", "Set up test environment by EOD July 1"], status: "upcoming" },
+  { id: "2", title: "Daily Standup", date: "2026-06-27", time: "09:30 AM", type: "standup", attendees: ["You", "Arjun (Dev)", "Priya (Dev)", "Rahul (PM)"], notes: "Blockers: Staging environment down. BUG-1042 critical ï¿½ escalated.", actionItems: ["Follow up with DevOps on staging env", "Retest BUG-1038 fix by EOD"], status: "upcoming" },
+  { id: "3", title: "Release Review ï¿½ E-Commerce v3.2", date: "2026-07-05", time: "02:00 PM", type: "review", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Kiran (DevOps)", "Manager"], notes: "", actionItems: ["Prepare test metrics report", "List all known issues with severity", "Demo critical flows"], status: "upcoming" },
+  { id: "4", title: "Sprint 23 Retrospective", date: "2026-06-26", time: "04:00 PM", type: "retrospective", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)"], notes: "What went well: Early defect detection on auth module. What to improve: Test environment stability ï¿½ need a dedicated QA env. Action: DevOps to provision dedicated QA instance.", actionItems: ["Document retrospective learnings in KB", "Share env request with DevOps"], status: "completed" },
+  { id: "5", title: "QA + Dev Sync ï¿½ Payment Integration", date: "2026-06-25", time: "11:00 AM", type: "standup", attendees: ["You", "Arjun (Dev)", "Priya (Dev)"], notes: "Reviewed Stripe v4 migration scope. 14 new test scenarios identified for the payment gateway.", actionItems: ["Write 14 new Stripe test cases", "Add to regression suite"], status: "completed" },
 ];
 
 const SAMPLE_KB: KBEntry[] = [
   { id: "1", title: "Production DB Read-Only Queries", content: "-- Get user order history\nSELECT u.email, o.id, o.total, o.status\nFROM users u JOIN orders o ON u.id = o.user_id\nWHERE u.email = 'test@example.com'\nORDER BY o.created_at DESC;\n\n-- Check active sessions\nSELECT * FROM sessions WHERE expires_at > NOW();", category: "sql", tags: ["production", "orders", "users"], updatedAt: "2026-06-20", isFavorite: true },
   { id: "2", title: "Staging Environment Credentials", content: "Staging URL: https://staging.ecommerce-app.internal\n\nTest Accounts:\n- Admin: admin@qa-test.com / TestAdmin@2024\n- User: buyer@qa-test.com / TestBuyer@2024\n- Guest checkout: No account needed\n\nDB Connection (Read-only):\nHost: staging-db.internal:5432\nDB: ecommerce_staging\nUser: qa_readonly / QARead@2024", category: "environments", tags: ["staging", "credentials", "db"], updatedAt: "2026-06-22", isFavorite: true },
-  { id: "3", title: "Checkout Flow Test Scenarios", content: "Happy Path\n1. Add item to cart ? checkout ? pay ? confirm\n2. Apply valid coupon code\n3. Guest checkout flow\n4. Saved address checkout\n\nEdge Cases\n- Cart with 50+ items\n- Multiple coupons (currently broken � BUG-1042)\n- International shipping addresses\n- Payment retry after failure\n\nNegative Tests\n- Invalid coupon codes\n- Expired card\n- Insufficient stock at checkout", category: "test-data", tags: ["checkout", "e-commerce", "scenarios"], updatedAt: "2026-06-25", isFavorite: false },
+  { id: "3", title: "Checkout Flow Test Scenarios", content: "Happy Path\n1. Add item to cart ? checkout ? pay ? confirm\n2. Apply valid coupon code\n3. Guest checkout flow\n4. Saved address checkout\n\nEdge Cases\n- Cart with 50+ items\n- Multiple coupons (currently broken ï¿½ BUG-1042)\n- International shipping addresses\n- Payment retry after failure\n\nNegative Tests\n- Invalid coupon codes\n- Expired card\n- Insufficient stock at checkout", category: "test-data", tags: ["checkout", "e-commerce", "scenarios"], updatedAt: "2026-06-25", isFavorite: false },
   { id: "4", title: "Playwright Setup & Troubleshooting", content: "Installation\nnpx playwright install --with-deps\n\nCommon Issues\n\nTests fail on CI but pass locally:\n- Check headless mode settings\n- Ensure correct BASE_URL env var\n- Increase timeout for slow CI runners\n\nBrowser not found:\nnpx playwright install chromium\n\nUseful Commands\nnpx playwright test --debug\nnpx playwright codegen https://staging.app.com\nnpx playwright show-report", category: "troubleshooting", tags: ["playwright", "automation", "ci"], updatedAt: "2026-06-18", isFavorite: false },
-  { id: "5", title: "Sprint 23 Release Notes � Auth Service 2.1", content: "Auth Service 2.1 � Released 2026-06-15\n\nNew Features\n- Three-tier permission system (Viewer/Editor/Admin)\n- OAuth 2.0 PKCE flow\n- Session management dashboard\n\nBug Fixes\n- Fixed silent token refresh failure on Safari (BUG-1031)\n- Resolved rate limiting false positives\n\nKnown Issues\n- Mobile Safari OAuth still requires manual re-login after token expiry\n\nTest Coverage: 94% (238/253 test cases passed)", category: "release-notes", tags: ["auth", "release", "sprint-23"], updatedAt: "2026-06-15", isFavorite: false },
-  { id: "6", title: "ISTQB � Test Design Techniques", content: "Equivalence Partitioning\nDivide inputs into partitions where behavior is the same.\nExample: Age field (0-17, 18-65, 66+)\n\nBoundary Value Analysis\nTest at boundaries of partitions.\nExample: Age 17, 18, 65, 66\n\nDecision Table Testing\nCapture combinations of conditions and resulting actions.\nBest for: Business rules with multiple conditions.\n\nState Transition Testing\nModel system as states and transitions.\nBest for: Login flows, order status machines.", category: "learning", tags: ["istqb", "theory", "design-techniques"], updatedAt: "2026-06-10", isFavorite: true },
+  { id: "5", title: "Sprint 23 Release Notes ï¿½ Auth Service 2.1", content: "Auth Service 2.1 ï¿½ Released 2026-06-15\n\nNew Features\n- Three-tier permission system (Viewer/Editor/Admin)\n- OAuth 2.0 PKCE flow\n- Session management dashboard\n\nBug Fixes\n- Fixed silent token refresh failure on Safari (BUG-1031)\n- Resolved rate limiting false positives\n\nKnown Issues\n- Mobile Safari OAuth still requires manual re-login after token expiry\n\nTest Coverage: 94% (238/253 test cases passed)", category: "release-notes", tags: ["auth", "release", "sprint-23"], updatedAt: "2026-06-15", isFavorite: false },
+  { id: "6", title: "ISTQB ï¿½ Test Design Techniques", content: "Equivalence Partitioning\nDivide inputs into partitions where behavior is the same.\nExample: Age field (0-17, 18-65, 66+)\n\nBoundary Value Analysis\nTest at boundaries of partitions.\nExample: Age 17, 18, 65, 66\n\nDecision Table Testing\nCapture combinations of conditions and resulting actions.\nBest for: Business rules with multiple conditions.\n\nState Transition Testing\nModel system as states and transitions.\nBest for: Login flows, order status machines.", category: "learning", tags: ["istqb", "theory", "design-techniques"], updatedAt: "2026-06-10", isFavorite: true },
 ];
 
 const SAMPLE_PROJECTS: Project[] = [
@@ -114,11 +114,11 @@ const SAMPLE_PROJECTS: Project[] = [
 ];
 
 const SAMPLE_ACTIVITIES: ActivityEntry[] = [
-  { id: "1", action: "Defect reported", module: "Defects", timestamp: "2026-06-27 09:45", details: "BUG-1055 � Search autocomplete returns stale results after profile update" },
+  { id: "1", action: "Defect reported", module: "Defects", timestamp: "2026-06-27 09:45", details: "BUG-1055 ï¿½ Search autocomplete returns stale results after profile update" },
   { id: "2", action: "Task completed", module: "Tasks", timestamp: "2026-06-26 17:30", details: "Review automation script for login flow marked as done" },
   { id: "3", action: "Template created", module: "Mail Templates", timestamp: "2026-06-26 14:20", details: "Added \"Sprint Test Summary\" template to Mail Templates" },
   { id: "4", action: "KB entry updated", module: "Knowledge Base", timestamp: "2026-06-25 11:10", details: "Updated \"Checkout Flow Test Scenarios\" with new edge cases" },
-  { id: "5", action: "Meeting notes saved", module: "Meetings", timestamp: "2026-06-25 10:30", details: "MOM saved for QA + Dev Sync � Payment Integration" },
+  { id: "5", action: "Meeting notes saved", module: "Meetings", timestamp: "2026-06-25 10:30", details: "MOM saved for QA + Dev Sync ï¿½ Payment Integration" },
   { id: "6", action: "Defect resolved", module: "Defects", timestamp: "2026-06-24 16:45", details: "BUG-1031 marked as resolved by Dev team" },
   { id: "7", action: "Task added", module: "Tasks", timestamp: "2026-06-24 09:00", details: "Added \"Cross-browser compatibility check\" to task backlog" },
   { id: "8", action: "Project updated", module: "Projects", timestamp: "2026-06-23 15:30", details: "E-Commerce v3.2 testing progress updated to 67%" },
@@ -302,7 +302,7 @@ function Header({ dark, onToggleDark, searchQuery, onSearch, onQuickAdd }: {
   };
 
   const notifs = [
-    { text: "BUG-1042 still unresolved � release in 18 days", dot: "bg-red-500", time: "10 min ago" },
+    { text: "BUG-1042 still unresolved ï¿½ release in 18 days", dot: "bg-red-500", time: "10 min ago" },
     { text: "Sprint 24 Planning tomorrow at 10:00 AM", dot: "bg-yellow-500", time: "1h ago" },
     { text: "BUG-1031 marked resolved by Ravi Shankar", dot: "bg-green-500", time: "2h ago" },
   ];
@@ -313,7 +313,7 @@ function Header({ dark, onToggleDark, searchQuery, onSearch, onQuickAdd }: {
         <input
           value={searchQuery}
           onChange={e => onSearch(e.target.value)}
-          placeholder="Search tasks, defects, notes�"
+          placeholder="Search tasks, defects, notesï¿½"
           className="w-full bg-accent/60 border border-border rounded-lg pl-8 pr-4 py-1.5 text-[13px] text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500/60 focus:border-indigo-500/40 transition-colors"
         />
         {searchQuery && (
@@ -412,7 +412,7 @@ function Dashboard({ tasks, defects, meetings, projects, templates, activities }
     <div className="h-full p-6 space-y-5 overflow-y-auto">
       <div>
         <h1 className="text-xl font-semibold">Good morning ??</h1>
-        <p className="text-[13px] text-muted-foreground mt-0.5">Friday, June 27, 2026 � {tasks.filter(t => t.status !== "done").length} tasks pending</p>
+        <p className="text-[13px] text-muted-foreground mt-0.5">Friday, June 27, 2026 ï¿½ {tasks.filter(t => t.status !== "done").length} tasks pending</p>
       </div>
 
       {/* KPI row */}
@@ -681,7 +681,7 @@ function TasksPage({ tasks, onAdd, onUpdate }: { tasks: Task[]; onAdd: (t: Omit<
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
-                <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Task title�" value={draft.title || ""} onChange={e => setDraft({ ...draft, title: e.target.value })} />
+                <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Task titleï¿½" value={draft.title || ""} onChange={e => setDraft({ ...draft, title: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -703,7 +703,7 @@ function TasksPage({ tasks, onAdd, onUpdate }: { tasks: Task[]; onAdd: (t: Omit<
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-                <textarea rows={3} className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none" placeholder="Task details�" value={draft.description || ""} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+                <textarea rows={3} className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none" placeholder="Task detailsï¿½" value={draft.description || ""} onChange={e => setDraft({ ...draft, description: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -767,7 +767,7 @@ function KnowledgeBasePage({ entries }: { entries: KBEntry[] }) {
           <h1 className="text-xl font-semibold">Knowledge Base</h1>
           <div className="relative w-56">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input className="w-full bg-accent/50 border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/60" placeholder="Search notes�" value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full bg-accent/50 border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/60" placeholder="Search notesï¿½" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -836,7 +836,7 @@ function MailTemplatesPage({ templates }: { templates: Template[] }) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold">Mail Templates</h1>
-          <p className="text-[13px] text-muted-foreground mt-0.5">{templates.length} templates � {templates.filter(t => t.isFavorite).length} favorites</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">{templates.length} templates ï¿½ {templates.filter(t => t.isFavorite).length} favorites</p>
         </div>
         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors">
           <Plus className="w-4 h-4" /> Add Template
@@ -952,7 +952,7 @@ function MeetingsPage({ meetings }: { meetings: Meeting[] }) {
               <div className="flex items-center gap-2 mb-3">
                 <span>{MTG_ICONS[m.type]}</span>
                 <h4 className="text-[13px] font-semibold">{m.title}</h4>
-                <span className="text-xs text-muted-foreground font-mono ml-auto">{m.date} � {m.time}</span>
+                <span className="text-xs text-muted-foreground font-mono ml-auto">{m.date} ï¿½ {m.time}</span>
               </div>
               <p className="text-xs text-foreground leading-relaxed mb-3">{m.notes}</p>
               {m.actionItems.length > 0 && (
@@ -1035,7 +1035,7 @@ function DefectsPage({ defects }: { defects: Defect[] }) {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-xl font-semibold">Defects</h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5">{defects.filter(d => d.status === "open").length} open � {defects.filter(d => d.severity === "critical").length} critical</p>
+            <p className="text-[13px] text-muted-foreground mt-0.5">{defects.filter(d => d.status === "open").length} open ï¿½ {defects.filter(d => d.severity === "critical").length} critical</p>
           </div>
           <button className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[13px] font-semibold transition-colors"><Plus className="w-4 h-4" /> Report Defect</button>
         </div>
@@ -1075,7 +1075,7 @@ function DefectsPage({ defects }: { defects: Defect[] }) {
           </div>
           <p className="text-[13px] font-semibold mb-3 leading-snug">{selected.summary}</p>
           <div className="flex gap-2 mb-4"><SBadge s={selected.severity} /><DSBadge s={selected.status} /></div>
-          <div className="text-xs text-muted-foreground mb-4">{selected.project} � {selected.assignee}</div>
+          <div className="text-xs text-muted-foreground mb-4">{selected.project} ï¿½ {selected.assignee}</div>
           <div className="space-y-4">
             {[
               { label: "Root Cause Analysis", text: selected.rca, cls: "bg-accent/50" },
@@ -1125,7 +1125,7 @@ function ProjectsPage({ projects }: { projects: Project[] }) {
               <h4 className="text-[13px] font-semibold leading-snug flex-1 mr-2">{p.name}</h4>
               <Badge className={statusCls[p.status]}>{p.status}</Badge>
             </div>
-            <div className="text-[11px] text-muted-foreground font-mono mb-3">v{p.version} � {p.releaseDate}</div>
+            <div className="text-[11px] text-muted-foreground font-mono mb-3">v{p.version} ï¿½ {p.releaseDate}</div>
             {p.totalTests > 0 ? (
               <>
                 <div className="flex justify-between text-xs mb-1">
@@ -1158,7 +1158,7 @@ function ProjectsPage({ projects }: { projects: Project[] }) {
 
       {barData.length > 0 && (
         <Card className="p-5">
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">{sel.name} � Test Results</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">{sel.name} ï¿½ Test Results</div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={barData}>
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -1194,7 +1194,7 @@ function AutomationHubPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-5">
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Execution Trend � 7 Days</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Execution Trend ï¿½ 7 Days</div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={EXECUTION_TREND}>
               <defs>
@@ -1388,10 +1388,10 @@ export default function App() {
     const currentTask = tasks.find(t => t.id === id);
     
     // Update task in database
-    await updateTask(numericId, u);
+    await updateTask(numericId, { ...u, id: undefined });
     
     // If status changed, add activity log
-    if (u.status && currentTask?.status !== u.status) {
+    if (u.status && currentTask && currentTask.status !== u.status) {
       let action: string;
       let details: string;
       switch (u.status) {

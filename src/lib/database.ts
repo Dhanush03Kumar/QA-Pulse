@@ -72,7 +72,7 @@ export async function getTasks(): Promise<DbTask[]> {
   return await db.tasks.toArray();
 }
 
-export async function addTask(task: Omit<DbTask, 'id'>): Promise<number> {
+export async function addTask(task: Omit<DbTask, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
   const now = new Date().toISOString();
   const taskWithTimestamps = { ...task, createdAt: now, updatedAt: now };
   return await db.tasks.add(taskWithTimestamps);
@@ -100,7 +100,7 @@ export async function addActivity(activity: Omit<DbActivity, 'id'>): Promise<num
     const excess = count - MAX_ACTIVITIES;
     const oldest = await db.activities.orderBy('timestamp').limit(excess).toArray();
     const ids = oldest.map(item => item.id);
-    await db.activities.bulkDelete(ids);
+    await db.activities.bulkDelete(ids.filter((id): id is number => id !== undefined));
   }
   return id;
 }
@@ -148,3 +148,4 @@ export async function importDatabase(jsonData: string | Record<string, unknown>)
     throw error;
   }
 }
+
