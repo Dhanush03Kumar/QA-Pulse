@@ -3,7 +3,7 @@ import {
   LayoutDashboard, CheckSquare, BookOpen, Mail, Calendar, Bug,
   FolderKanban, Cpu, Activity, ChevronLeft, ChevronRight,
   Search, Bell, Plus, Sun, Moon, Copy, AlertTriangle,
-  CheckCircle, Clock, Star, X, Zap, Target, Upload, Download,
+  CheckCircle, Clock, Star, X, Zap, Target, Upload, Download, Link,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -54,10 +54,20 @@ interface KBEntry {
   tags: string[]; updatedAt: string; isFavorite: boolean;
 }
 interface Project {
-  id: string; name: string; status: "active" | "planning" | "completed" | "on-hold";
+  id: string; name: string; mode: "planning" | "analysis" | "design" | "active" | "signoff" | "retro";
   progress: number; totalTests: number; passedTests: number; failedTests: number;
   blockedTests: number; defectsOpen: number; defectsClosed: number;
-  releaseDate: string; version: string; description: string;
+  releaseDate: string; version: string;
+  // New fields per cockpit redesign
+  externalLinks: {
+    jira?: string;
+    testrail?: string;
+    obsidian?: string;
+  };
+  blockersRisks: string;
+  lastUpdated: string; // ISO timestamp
+  // Description repurposed for lightweight summary (detailed specs in Obsidian)
+  description: string;
 }
 interface ActivityEntry {
   id: string; action: string; module: string; timestamp: string; details: string;
@@ -112,10 +122,94 @@ const SAMPLE_KB: KBEntry[] = [
 ];
 
 const SAMPLE_PROJECTS: Project[] = [
-  { id: "1", name: "E-Commerce v3.2", status: "active", progress: 67, totalTests: 342, passedTests: 229, failedTests: 18, blockedTests: 12, defectsOpen: 4, defectsClosed: 23, releaseDate: "2026-07-15", version: "3.2.0", description: "Major checkout revamp with Stripe v4 integration, new discount engine, and performance improvements." },
-  { id: "2", name: "Auth Service 2.1", status: "completed", progress: 100, totalTests: 253, passedTests: 238, failedTests: 0, blockedTests: 0, defectsOpen: 0, defectsClosed: 15, releaseDate: "2026-06-15", version: "2.1.0", description: "Three-tier RBAC system with OAuth 2.0 PKCE and improved session management." },
-  { id: "3", name: "Analytics Dashboard", status: "active", progress: 45, totalTests: 187, passedTests: 84, failedTests: 12, blockedTests: 8, defectsOpen: 3, defectsClosed: 7, releaseDate: "2026-08-01", version: "1.3.0", description: "New visualization engine, CSV export improvements, and real-time dashboard updates." },
-  { id: "4", name: "Mobile App v2.0", status: "planning", progress: 10, totalTests: 0, passedTests: 0, failedTests: 0, blockedTests: 0, defectsOpen: 0, defectsClosed: 0, releaseDate: "2026-09-30", version: "2.0.0", description: "Complete React Native rewrite with offline support and biometric authentication." },
+  {
+    id: "1",
+    name: "E-Commerce v3.2",
+    mode: "active",
+    progress: 67,
+    totalTests: 342,
+    passedTests: 229,
+    failedTests: 18,
+    blockedTests: 12,
+    defectsOpen: 4,
+    defectsClosed: 23,
+    releaseDate: "2026-07-15",
+    version: "3.2.0",
+    externalLinks: {
+      jira: "https://jira.company.com/projects/ECOM32",
+      testrail: "https://testrail.company.com/index.php?/suites/view/45",
+      obsidian: "https://obsidian.company.com/vault/E-Commerce-v3.2"
+    },
+    blockersRisks: "Staging env instability (2/week); Payment gateway sandbox rate limits",
+    lastUpdated: "2026-06-27T10:30:00Z",
+    description: "Major checkout revamp with Stripe v4 integration, new discount engine, and performance improvements."
+  },
+  {
+    id: "2",
+    name: "Auth Service 2.1",
+    mode: "retro",
+    progress: 100,
+    totalTests: 253,
+    passedTests: 238,
+    failedTests: 0,
+    blockedTests: 0,
+    defectsOpen: 0,
+    defectsClosed: 15,
+    releaseDate: "2026-06-15",
+    version: "2.1.0",
+    externalLinks: {
+      jira: "https://jira.company.com/projects/AUTH21",
+      testrail: "https://testrail.company.com/index.php?/suites/view/32",
+      obsidian: "https://obsidian.company.com/vault/Auth-Service-2.1"
+    },
+    blockersRisks: "None - project completed successfully",
+    lastUpdated: "2026-06-20T14:15:00Z",
+    description: "Three-tier RBAC system with OAuth 2.0 PKCE and improved session management."
+  },
+  {
+    id: "3",
+    name: "Analytics Dashboard",
+    mode: "design",
+    progress: 45,
+    totalTests: 187,
+    passedTests: 84,
+    failedTests: 12,
+    blockedTests: 8,
+    defectsOpen: 3,
+    defectsClosed: 7,
+    releaseDate: "2026-08-01",
+    version: "1.3.0",
+    externalLinks: {
+      jira: "https://jira.company.com/projects/ANALYTICS",
+      testrail: "https://testrail.company.com/index.php?/suites/view/58",
+      obsidian: "https://obsidian.company.com/vault/Analytics-Dashboard"
+    },
+    blockersRisks: "Charting library license renewal pending; Real-time data pipeline integration complexity",
+    lastUpdated: "2026-06-26T09:15:00Z",
+    description: "New visualization engine, CSV export improvements, and real-time dashboard updates."
+  },
+  {
+    id: "4",
+    name: "Mobile App v2.0",
+    mode: "planning",
+    progress: 10,
+    totalTests: 0,
+    passedTests: 0,
+    failedTests: 0,
+    blockedTests: 0,
+    defectsOpen: 0,
+    defectsClosed: 0,
+    releaseDate: "2026-09-30",
+    version: "2.0.0",
+    externalLinks: {
+      jira: "https://jira.company.com/projects/MOBILE20",
+      testrail: "",
+      obsidian: "https://obsidian.company.com/vault/Mobile-App-v2.0"
+    },
+    blockersRisks: "Biometric auth module dependency on Q3 SDK release; App store review process uncertainty",
+    lastUpdated: "2026-06-25T16:45:00Z",
+    description: "Complete React Native rewrite with offline support and biometric authentication."
+  },
 ];
 
 const SAMPLE_ACTIVITIES: ActivityEntry[] = [
@@ -406,7 +500,7 @@ function Header({ dark, onToggleDark, searchQuery, onSearch, onQuickAdd }: {
 function Dashboard({ tasks, defects, meetings, projects, templates, activities }: {
   tasks: Task[]; defects: Defect[]; meetings: Meeting[]; projects: Project[]; templates: Template[]; activities: ActivityEntry[];
 }) {
-  const active = projects.find(p => p.status === "active") || projects[0];
+  const active = projects.find(p => p.mode === "active") || projects[0];
   const openDefects = defects.filter(d => d.status === "open" || d.status === "reopened");
   const todayTasks = tasks.filter(t => t.status !== "done").slice(0, 5);
   const upcomingMtgs = meetings.filter(m => m.status === "upcoming").slice(0, 3);
@@ -466,7 +560,7 @@ function Dashboard({ tasks, defects, meetings, projects, templates, activities }
         {/* Release Snapshot */}
         <Card className="p-5">
           <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Release Snapshot</div>
-          {projects.filter(p => p.status === "active").map(p => (
+          {projects.filter(p => p.mode === "active").map(p => (
             <div key={p.id} className="mb-3 p-3 bg-muted/60 rounded-lg">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[13px] font-medium">{p.name}</span>
@@ -1415,11 +1509,25 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
 
 function ProjectsPage({ projects }: { projects: Project[] }) {
   const [sel, setSel] = useState<Project>(projects[0]);
-  const statusCls: Record<string, string> = {
-    active: "bg-green-500/20 text-green-400 border border-green-500/30",
+
+  // Mode-specific styling
+  const modeCls: Record<string, string> = {
     planning: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
-    completed: "bg-slate-500/20 text-slate-400 border border-slate-500/30",
-    "on-hold": "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+    analysis: "bg-purple-500/20 text-purple-400 border border-purple-500/30",
+    design: "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30",
+    active: "bg-green-500/20 text-green-400 border border-green-500/30",
+    signoff: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+    retro: "bg-green-600/20 text-green-500 border border-green-600/30",
+  };
+
+  // Mode display names
+  const modeLabels: Record<string, string> = {
+    planning: "Planning",
+    analysis: "Analysis",
+    design: "Design",
+    active: "Active",
+    signoff: "Signoff",
+    retro: "Retro",
   };
 
   const barData = sel.totalTests > 0 ? [
@@ -1437,28 +1545,67 @@ function ProjectsPage({ projects }: { projects: Project[] }) {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {projects.map(p => (
-          <Card key={p.id} onClick={() => setSel(p)} className={`p-4 hover:border-indigo-500/40 transition-colors ${sel.id === p.id ? "border-indigo-500/50 bg-indigo-600/5" : ""} ${p.status === "active" ? "ring-1 ring-indigo-500/20" : ""}`}>
-            <div className="flex items-start justify-between mb-2">
+          <Card key={p.id} onClick={() => setSel(p)} className={`p-4 hover:border-indigo-500/40 transition-colors ${sel.id === p.id ? "border-indigo-500/50 bg-indigo-600/5" : ""} ${p.mode === "active" ? "ring-1 ring-indigo-500/20" : ""}`}>
+            {/* Project header with name and mode badge */}
+            <div className="flex items-start justify-between mb-3">
               <h4 className="text-[13px] font-semibold leading-snug flex-1 mr-2">{p.name}</h4>
-              <Badge className={statusCls[p.status]}>{p.status}</Badge>
+              <Badge className={modeCls[p.mode]}>{modeLabels[p.mode]}</Badge>
             </div>
-            <div className="text-[11px] text-muted-foreground font-mono mb-3">v{p.version} ï¿½ {p.releaseDate}</div>
-            {p.totalTests > 0 ? (
+
+            {/* Version and release date - fixed mojibake */}
+            <div className="text-[11px] text-muted-foreground font-mono mb-2">
+              v{p.version} · {p.releaseDate}
+            </div>
+
+            {/* External links row */}
+            <div className="flex flex-wrap gap-2 mb-3 text-xs">
+              {p.externalLinks.jira && (
+                <a href={p.externalLinks.jira} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-0.5 bg-accent/50 rounded-hover hover:bg-accent/70 transition-colors">
+                  <Link className="w-3 h-3" /> Jira
+                </a>
+              )}
+              {p.externalLinks.testrail && (
+                <a href={p.externalLinks.testrail} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-0.5 bg-accent/50 rounded-hover hover:bg-accent/70 transition-colors">
+                  <Activity className="w-3 h-3" /> TestRail
+                </a>
+              )}
+              {p.externalLinks.obsidian && (
+                <a href={p.externalLinks.obsidian} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-2 py-0.5 bg-accent/50 rounded-hover hover:bg-accent/70 transition-colors">
+                  <BookOpen className="w-3 h-3" /> Obsidian
+                </a>
+              )}
+            </div>
+
+            {/* Progress indicator for active projects, phase indicator for others */}
+            {p.mode === "active" && p.totalTests > 0 ? (
               <>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Coverage</span>
                   <span className="font-semibold font-mono">{p.progress}%</span>
                 </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${p.progress}%` }} />
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                  <div className={`h-full bg-indigo-500 rounded-full`} style={{ width: `${p.progress}%` }} />
                 </div>
               </>
-            ) : <div className="text-xs text-muted-foreground">Planning phase</div>}
+            ) : (
+              <div className="text-xs text-muted-foreground italic mb-2">{p.mode.charAt(0).toUpperCase() + p.mode.slice(1)} phase</div>
+            )}
+
+            {/* Blockers/Risks */}
+            <div className="mb-2">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Blockers/Risks</div>
+              <p className="text-xs text-muted-foreground">{p.blockersRisks}</p>
+            </div>
+
+            {/* Last updated timestamp */}
+            <div className="text-[9px] text-muted-foreground font-mono">
+              Last updated: {new Date(p.lastUpdated).toLocaleString()}
+            </div>
           </Card>
         ))}
       </div>
 
-      {sel.totalTests > 0 && (
+      {sel.mode === "active" && sel.totalTests > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           {[
             { l: "Total Tests", v: sel.totalTests, c: "text-foreground" },
@@ -1473,9 +1620,9 @@ function ProjectsPage({ projects }: { projects: Project[] }) {
         </div>
       )}
 
-      {barData.length > 0 && (
+      {sel.mode === "active" && barData.length > 0 && (
         <Card className="p-5">
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">{sel.name} ï¿½ Test Results</div>
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">{sel.name} · Test Results</div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={barData}>
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
