@@ -95,7 +95,7 @@ const SAMPLE_TEMPLATES: Template[] = [
 ];
 
 const SAMPLE_MEETINGS: Meeting[] = [
-  { id: "1", title: "Sprint 24 Planning", date: "2026-06-30", time: "10:00 AM", type: "planning", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)", "Sneha (Dev)"], notes: "Sprint 24 runs July 1ï¿½14. Focus on E-Commerce v3.2 checkout revamp and Auth Service hardening.", actionItems: ["Prepare test plan for checkout revamp", "Review Auth Service test cases with dev team", "Set up test environment by EOD July 1"], status: "upcoming" },
+  { id: "1", title: "Sprint 24 Planning", date: "2026-06-30", time: "10:00 AM", type: "planning", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)", "Sneha (Dev)"], notes: "Sprint 24 runs July 14. Focus on E-Commerce v3.2 checkout revamp and Auth Service hardening.", actionItems: ["Prepare test plan for checkout revamp", "Review Auth Service test cases with dev team", "Set up test environment by EOD July 1"], status: "upcoming" },
   { id: "2", title: "Daily Standup", date: "2026-06-27", time: "09:30 AM", type: "standup", attendees: ["You", "Arjun (Dev)", "Priya (Dev)", "Rahul (PM)"], notes: "Blockers: Staging environment down. BUG-1042 critical ï¿½ escalated.", actionItems: ["Follow up with DevOps on staging env", "Retest BUG-1038 fix by EOD"], status: "upcoming" },
   { id: "3", title: "Release Review ï¿½ E-Commerce v3.2", date: "2026-07-05", time: "02:00 PM", type: "review", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Kiran (DevOps)", "Manager"], notes: "", actionItems: ["Prepare test metrics report", "List all known issues with severity", "Demo critical flows"], status: "upcoming" },
   { id: "4", title: "Sprint 23 Retrospective", date: "2026-06-26", time: "04:00 PM", type: "retrospective", attendees: ["You", "Rahul (PM)", "Arjun (Dev)", "Priya (Dev)"], notes: "What went well: Early defect detection on auth module. What to improve: Test environment stability ï¿½ need a dedicated QA env. Action: DevOps to provision dedicated QA instance.", actionItems: ["Document retrospective learnings in KB", "Share env request with DevOps"], status: "completed" },
@@ -841,7 +841,7 @@ function MailTemplatesPage({ templates }: { templates: Template[] }) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold">Mail Templates</h1>
-          <p className="text-[13px] text-muted-foreground mt-0.5">{templates.length} templates ï¿½ {templates.filter(t => t.isFavorite).length} favorites</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">{templates.length} templates -{templates.filter(t => t.isFavorite).length} favorites</p>
         </div>
         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors">
           <Plus className="w-4 h-4" /> Add Template
@@ -938,6 +938,7 @@ function MeetingsPage({ meetings }: { meetings: Meeting[] }) {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>?? {m.time}</span>
                     <span>?? {m.attendees.length} attendees</span>
+                    <span>?? {m.type} </span>
                   </div>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {m.attendees.slice(0, 4).map(a => <span key={a} className="text-[10px] bg-accent px-1.5 py-0.5 rounded text-muted-foreground">{a}</span>)}
@@ -957,7 +958,7 @@ function MeetingsPage({ meetings }: { meetings: Meeting[] }) {
               <div className="flex items-center gap-2 mb-3">
                 <span>{MTG_ICONS[m.type]}</span>
                 <h4 className="text-[13px] font-semibold">{m.title}</h4>
-                <span className="text-xs text-muted-foreground font-mono ml-auto">{m.date} ï¿½ {m.time}</span>
+                <span className="text-xs text-muted-foreground font-mono ml-auto">{m.date} - {m.time}</span>
               </div>
               <p className="text-xs text-foreground leading-relaxed mb-3">{m.notes}</p>
               {m.actionItems.length > 0 && (
@@ -1039,6 +1040,18 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
     project: "E-Commerce v3.2",
     foundIn: "QA"
   });
+  const [editingDefectId, setEditingDefectId] = useState<string | null>(null);
+  const [draftDefect, setDraftDefect] = useState<Partial<Defect>>({});
+
+  // Status advancement mapping for defects
+  const defectStatusNext: Record<DefectStatus, DefectStatus> = {
+    "open": "in-progress",
+    "in-progress": "resolved",
+    "resolved": "closed",
+    "closed": "reopened",
+    "reopened": "in-progress"
+  };
+
   const filtered = filter === "all" ? defects : defects.filter(d => d.status === filter);
   
   return (
@@ -1087,31 +1100,231 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
       {selected && (
         <div className="w-72 border-l border-border bg-card p-5 overflow-y-auto flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
-  {selected.jiraLink ? (
-    <a href={selected.jiraLink} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-indigo-400 font-semibold hover:underline">
-      {selected.jiraTicket}
-    </a>
-  ) : (
-    <span className="text-xs font-mono text-indigo-400 font-semibold">{selected.jiraTicket}</span>
-  )}
-  <button onClick={() => setSelected(null)}><X className="w-4 h-4 text-muted-foreground hover:text-foreground" /></button>
-</div>
-          <p className="text-[13px] font-semibold mb-3 leading-snug">{selected.summary}</p>
-          <div className="flex gap-2 mb-4"><SBadge s={selected.severity} /><DSBadge s={selected.status} /></div>
-          <div className="text-xs text-muted-foreground mb-4">{selected.project} - {selected.assignee}</div>
-          <div className="space-y-4">
-            {[
-              { label: "Description", text: selected.description, cls: "bg-accent/50" },
-              { label: "Root Cause Analysis", text: selected.rca, cls: "bg-accent/50" },
-              { label: "Workaround", text: selected.workaround, cls: "bg-accent/50" },
-              { label: "Lessons Learned", text: selected.lessonsLearned, cls: "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300/80" },
-            ].map(({ label, text, cls }) => (
-              <div key={label}>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">{label}</div>
-                <p className={`text-xs leading-relaxed p-3 rounded-lg ${cls}`}>{text}</p>
-              </div>
-            ))}
+            <span className="text-xs font-mono text-indigo-400 font-semibold">
+              {selected.jiraLink ? (
+                <a href={selected.jiraLink} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {selected.jiraTicket}
+                </a>
+              ) : (
+                selected.jiraTicket
+              )}
+            </span>
+            <div className="flex items-center gap-2">
+              {!editingDefectId && (
+                <button
+                  onClick={() => {
+                    setDraftDefect({
+                      jiraTicket: selected.jiraTicket,
+                      jiraLink: selected.jiraLink || "",
+                      summary: selected.summary,
+                      severity: selected.severity,
+                      status: selected.status,
+                      project: selected.project,
+                      assignee: selected.assignee,
+                      rca: selected.rca,
+                      workaround: selected.workaround,
+                      lessonsLearned: selected.lessonsLearned,
+                      description: selected.description,
+                    });
+                    setEditingDefectId(selected.id);
+                  }}
+                  className="text-xs font-semibold hover:text-indigo-400 transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+              <button onClick={() => setSelected(null)}><X className="w-4 h-4 text-muted-foreground hover:text-foreground" /></button>
+            </div>
           </div>
+
+          {editingDefectId === selected.id ? (
+            // Edit form
+            <form className="space-y-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Jira Ticket *</label>
+                <input
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="BUG-1042"
+                  value={draftDefect.jiraTicket || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, jiraTicket: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Jira Link</label>
+                <input
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none"
+                  placeholder="https://..."
+                  value={draftDefect.jiraLink || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, jiraLink: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Summary *</label>
+                <input
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Short defect summary"
+                  value={draftDefect.summary || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, summary: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Assignee *</label>
+                <input
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none"
+                  placeholder="Assigned to"
+                  value={draftDefect.assignee || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, assignee: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Severity</label>
+                  <select
+                    className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none"
+                    value={draftDefect.severity}
+                    onChange={(e) => setDraftDefect({ ...draftDefect, severity: e.target.value as Defect["severity"] })}
+                  >
+                    {["critical", "major", "minor", "blocker"].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Found In</label>
+                  <select
+                    className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none"
+                    value={draftDefect.foundIn}
+                    onChange={(e) => setDraftDefect({ ...draftDefect, foundIn: e.target.value as Defect["foundIn"] })}
+                  >
+                    {["Dev", "QA", "Staging", "Prod"].map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Project</label>
+                <select
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none"
+                  value={draftDefect.project}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, project: e.target.value })}
+                >
+                  {SAMPLE_PROJECTS.map((p) => (
+                    <option key={p.id} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+                <textarea
+                  rows={3}
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none"
+                  placeholder="Steps to reproduce"
+                  value={draftDefect.description || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Root Cause Analysis</label>
+                <textarea
+                  rows={3}
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none"
+                  placeholder="Root cause"
+                  value={draftDefect.rca || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, rca: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Workaround</label>
+                <textarea
+                  rows={3}
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none"
+                  placeholder="Workaround"
+                  value={draftDefect.workaround || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, workaround: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Lessons Learned</label>
+                <textarea
+                  rows={3}
+                  className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none"
+                  placeholder="Lessons learned"
+                  value={draftDefect.lessonsLearned || ""}
+                  onChange={(e) => setDraftDefect({ ...draftDefect, lessonsLearned: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => {
+                    setEditingDefectId(null);
+                    setDraftDefect({});
+                  }}
+                  className="flex-1 py-2 bg-accent/60 hover:bg-accent rounded-lg text-[13px] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (draftDefect.jiraTicket && draftDefect.summary && draftDefect.assignee) {
+                      onUpdate(selected.id, draftDefect);
+                      setEditingDefectId(null);
+                      setDraftDefect({});
+                    }
+                  }}
+                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          ) : (
+            // View mode
+            <>
+              <p className="text-[13px] font-semibold mb-3 leading-snug">{selected.summary}</p>
+              <div className="flex gap-2 mb-4">
+                <SBadge s={selected.severity} />
+                <DSBadge s={selected.status} />
+              </div>
+              <div className="text-xs text-muted-foreground mb-4">
+                {selected.project} - {selected.assignee}
+              </div>
+              <div className="space-y-4">
+                {[
+                  { label: "Description", text: selected.description, cls: "bg-accent/50" },
+                  { label: "Root Cause Analysis", text: selected.rca, cls: "bg-accent/50" },
+                  { label: "Workaround", text: selected.workaround, cls: "bg-accent/50" },
+                  { label: "Lessons Learned", text: selected.lessonsLearned, cls: "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300/80" },
+                ].map(({ label, text, cls }) => (
+                  <div key={label}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">{label}</div>
+                    <p className={`text-xs leading-relaxed p-3 rounded-lg ${cls}`}>{text}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-4 border-t border-border">
+                <button
+                  onClick={() => {
+                    const nextStatus = defectStatusNext[selected.status];
+                    onUpdate(selected.id, { status: nextStatus });
+                    setSelected({ ...selected, status: nextStatus });
+                  }}
+                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors"
+                >
+                  Advance Status
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
