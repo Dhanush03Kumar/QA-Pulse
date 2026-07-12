@@ -1,4 +1,4 @@
-import Dexie, { Table } from 'dexie';
+﻿import Dexie, { Table } from 'dexie';
 
 export interface DbTask {
   id?: number;
@@ -24,14 +24,20 @@ export interface DbActivity {
 // Defect interface with new fields
 export interface DbDefect {
   id?: number;
-  title: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-  // New fields for QA ownership view
   foundIn: 'Dev' | 'QA' | 'Staging' | 'Prod';
   jiraTicket: string;
   jiraLink?: string;
+  severity: 'critical' | 'major' | 'minor' | 'blocker';
+  summary: string;
+  status: 'open' | 'in-progress' | 'resolved' | 'closed' | 'reopened';
+  project: string;
+  assignee: string;
+  rca: string;
+  workaround: string;
+  lessonsLearned: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // We'll keep the other interfaces for compatibility but we won't use them for tasks/activities
@@ -79,26 +85,27 @@ class QANexusDatabase extends Dexie {
       projects: '++id, title, description, createdAt, updatedAt',
       activities: '++id, action, module, timestamp, details',
     });
-    this.version(2).stores({
-      tasks: '++id, title, description, priority, status, dueDate, project, tags, createdAt, updatedAt',
-      defects: '++id, title, description, createdAt, updatedAt, foundIn, jiraTicket, jiraLink',
-      meetings: '++id, title, description, createdAt, updatedAt',
-      projects: '++id, title, description, status, progress, totalTests, passedTests, failedTests, blockedTests, releaseDate, version, referenceTitle, referenceUrl, createdAt, updatedAt',
-      activities: '++id, action, module, timestamp, details',
-    });
+  this.version(3).stores({
+  tasks: '++id, title, description, priority, status, dueDate, project, tags, createdAt, updatedAt',
+  defects: '++id, jiraTicket, jiraLink, severity, summary, status, project, assignee, foundIn, createdAt, updatedAt',
+  meetings: '++id, title, description, createdAt, updatedAt',
+  projects: '++id, title, description, status, progress, totalTests, passedTests, failedTests, blockedTests, releaseDate, version, referenceTitle, referenceUrl, createdAt, updatedAt',
+  activities: '++id, action, module, timestamp, details',
+}).upgrade(async (txn) => {
+  await txn.table('defects').toCollection().modify(defect => {
+    if (defect.severity === undefined) defect.severity = 'minor';
+    if (defect.status === undefined) defect.status = 'open';
+    if (defect.project === undefined) defect.project = 'E-Commerce v3.2';
+    if (defect.assignee === undefined) defect.assignee = '';
+    if (defect.rca === undefined) defect.rca = '';
+    if (defect.workaround === undefined) defect.workaround = '';
+    if (defect.lessonsLearned === undefined) defect.lessonsLearned = '';
+    if (defect.summary === undefined) defect.summary = defect.title || '';
+  });
+});
   }
 
-  upgrade(txn: Dexie.Transaction, oldVersion: number, newVersion: number) {
-    if (oldVersion < 2) {
-      // Migration from version 1 to 2
-      txn.table('defects').toCollection().modify(defect => {
-        // Set default values for new fields
-        if (defect.foundIn === undefined) defect.foundIn = 'QA';
-        if (defect.jiraTicket === undefined) defect.jiraTicket = '';
-        // jiraLink is optional, no default needed
-      });
-    }
-  }
+  
 }
 
 export const db = new QANexusDatabase();

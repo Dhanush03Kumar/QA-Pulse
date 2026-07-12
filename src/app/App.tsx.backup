@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, Cell,
 } from "recharts";
 
-import { exportDatabase, importDatabase, getTasks,getDefects, addTask,addDefect, updateTask,updateDefect, getActivities, addActivity } from "../lib/database";
+import { exportDatabase, importDatabase, getTasks, addTask, updateTask, getActivities, addActivity } from "../lib/database";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./components/ui/dialog";
 
 // --- Types ------------------------------------------------------------------
@@ -18,7 +18,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 type Priority = "critical" | "high" | "medium" | "low";
 type TaskStatus = "todo" | "in-progress" | "blocked" | "done";
 type DefectStatus = "open" | "in-progress" | "resolved" | "closed" | "reopened";
-type Severity = "critical" | "major" | "minor" | "blocker";
+type Severity = "critical" | "major" | "minor" | "trivial";
 type NavItem =
   | "dashboard" | "tasks" | "knowledge" | "templates"
   | "meetings" | "defects" | "projects" | "automation" | "activity";
@@ -27,15 +27,10 @@ interface Task {
   id: string; title: string; priority: Priority; status: TaskStatus;
   dueDate: string; project: string; description: string; tags: string[];
 }
-interface Defect{
-  id: string;
-  foundIn: 'Dev' | 'QA' | 'Staging' | 'Prod';
-  jiraTicket: string;  jiraLink?: string;
-  severity: 'critical'|'major'|'minor'|'blocker';
-  summary: string;
-  status: 'open'|'in-progress'|'resolved'|'closed'|'reopened';
-  project: string;  assignee: string;  createdAt: string;
-  rca: string; workaround:string; lessonsLearned:string; description: string; 
+interface Defect {
+  id: string; defectId: string; summary: string; severity: Severity;
+  status: DefectStatus; project: string; assignee: string; createdAt: string;
+  rca: string; workaround: string; lessonsLearned: string;
 }
 interface Template {
   id: string; title: string; subject: string; body: string;
@@ -69,7 +64,7 @@ const INIT_TASKS: Task[] = [
   { id: "1", title: "Write regression test suite for checkout flow", priority: "high", status: "in-progress", dueDate: "2026-07-02", project: "E-Commerce v3.2", description: "Complete regression coverage for the new checkout redesign including payment gateway changes.", tags: ["regression", "checkout"] },
   { id: "2", title: "Verify payment gateway integration ï¿½ Stripe v4", priority: "critical", status: "todo", dueDate: "2026-06-28", project: "E-Commerce v3.2", description: "Test all Stripe v4 API endpoints including webhooks and refund flows.", tags: ["integration", "payment"] },
   { id: "3", title: "Update test data for new user roles", priority: "medium", status: "done", dueDate: "2026-06-25", project: "Auth Service 2.1", description: "Create test accounts for the 3 new permission tiers in Auth Service.", tags: ["test-data", "auth"] },
-  { id: "4", title: "Performance testing  API response times", priority: "high", status: "blocked", dueDate: "2026-07-05", project: "E-Commerce v3.2", description: "Load test API endpoints under 1000 concurrent users. Blocked on staging environment.", tags: ["performance", "api"] },
+  { id: "4", title: "Performance testing ï¿½ API response times", priority: "high", status: "blocked", dueDate: "2026-07-05", project: "E-Commerce v3.2", description: "Load test API endpoints under 1000 concurrent users. Blocked on staging environment.", tags: ["performance", "api"] },
   { id: "5", title: "Smoke test production deployment", priority: "critical", status: "todo", dueDate: "2026-06-27", project: "Auth Service 2.1", description: "Post-deployment smoke test checklist for prod release.", tags: ["smoke", "production"] },
   { id: "6", title: "Document SQL queries for reports module", priority: "low", status: "in-progress", dueDate: "2026-07-10", project: "Analytics Dashboard", description: "Document all custom SQL queries used in the reporting module.", tags: ["documentation", "sql"] },
   { id: "7", title: "Cross-browser compatibility check", priority: "medium", status: "todo", dueDate: "2026-07-08", project: "E-Commerce v3.2", description: "Test on Chrome, Firefox, Safari, Edge for all critical user flows.", tags: ["compatibility", "browser"] },
@@ -77,12 +72,12 @@ const INIT_TASKS: Task[] = [
 ];
 
 const SAMPLE_DEFECTS: Defect[] = [
-  { id: "1", jiraTicket: "BUG-1042", summary: "Checkout fails when applying multiple discount codes", severity: "critical", status: "open", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta", foundIn:"QA",createdAt: "2026-06-25", rca: "Race condition in discount validation service when processing concurrent coupon API calls.", workaround: "Apply coupons one at a time with a 2-second delay between applications.", lessonsLearned: "Add concurrency tests for all discount/promo flows going forward.", description: "sample"},
-  { id: "2", jiraTicket: "BUG-1038", summary: "PDF invoice generation fails for orders >100 items", severity: "major", status: "in-progress", project: "E-Commerce v3.2", assignee: "Dev: Priya Nair",foundIn:"Staging", createdAt: "2026-06-23", rca: "Memory overflow in PDF library ï¿½ no pagination for large item sets.", workaround: "Generate invoices manually via admin panel for orders exceeding 100 items.", lessonsLearned: "Test boundary conditions for all document generation functions." ,description: "sample"},
-  { id: "3", jiraTicket: "BUG-1031", summary: "OAuth token refresh fails silently on mobile Safari", severity: "major", status: "resolved", project: "Auth Service 2.1", assignee: "Dev: Ravi Shankar", foundIn:"Prod",createdAt: "2026-06-20", rca: "Safari blocks third-party cookies by default; token refresh relied on cookie-based session.", workaround: "Users must re-login after token expiry on mobile Safari.", lessonsLearned: "Always test auth flows on Safari with default ITP settings enabled.",description: "sample" },
-  { id: "4", jiraTicket: "BUG-1027", summary: "Dashboard charts not loading on slow connections (<3G)", severity: "minor", status: "open", project: "Analytics Dashboard", assignee: "Dev: Sneha Patel",foundIn:"Dev", createdAt: "2026-06-18", rca: "No lazy loading or skeleton states ï¿½ charts block render on slow network.", workaround: "None ï¿½ charts fail to load for users on slow connections.", lessonsLearned: "Implement skeleton loading states for all chart components.",description: "sample" },
-  { id: "5", jiraTicket: "BUG-1019", summary: "Export CSV truncates rows > 10,000 records", severity: "major", status: "closed", project: "Analytics Dashboard", assignee: "Dev: Kiran Rao",foundIn:"QA", createdAt: "2026-06-14", rca: "CSV export hard-coded limit of 10k rows; not documented in UI.", workaround: "Use date-range filters to export in batches under 10k rows.", lessonsLearned: "Document all export limits in UI; implement streaming for large exports.", description: "sample"},
-  { id: "6", jiraTicket: "BUG-1055", summary: "Search autocomplete returns stale results after profile update", severity: "minor", status: "reopened", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta",foundIn:"QA", createdAt: "2026-06-26", rca: "Redis cache not invalidated on profile update.", workaround: "Hard refresh browser to clear local cache.", lessonsLearned: "Cache invalidation strategy must be part of feature design review.", description: "sample"},
+  { id: "1", defectId: "BUG-1042", summary: "Checkout fails when applying multiple discount codes", severity: "critical", status: "open", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta", createdAt: "2026-06-25", rca: "Race condition in discount validation service when processing concurrent coupon API calls.", workaround: "Apply coupons one at a time with a 2-second delay between applications.", lessonsLearned: "Add concurrency tests for all discount/promo flows going forward." },
+  { id: "2", defectId: "BUG-1038", summary: "PDF invoice generation fails for orders >100 items", severity: "major", status: "in-progress", project: "E-Commerce v3.2", assignee: "Dev: Priya Nair", createdAt: "2026-06-23", rca: "Memory overflow in PDF library ï¿½ no pagination for large item sets.", workaround: "Generate invoices manually via admin panel for orders exceeding 100 items.", lessonsLearned: "Test boundary conditions for all document generation functions." },
+  { id: "3", defectId: "BUG-1031", summary: "OAuth token refresh fails silently on mobile Safari", severity: "major", status: "resolved", project: "Auth Service 2.1", assignee: "Dev: Ravi Shankar", createdAt: "2026-06-20", rca: "Safari blocks third-party cookies by default; token refresh relied on cookie-based session.", workaround: "Users must re-login after token expiry on mobile Safari.", lessonsLearned: "Always test auth flows on Safari with default ITP settings enabled." },
+  { id: "4", defectId: "BUG-1027", summary: "Dashboard charts not loading on slow connections (<3G)", severity: "minor", status: "open", project: "Analytics Dashboard", assignee: "Dev: Sneha Patel", createdAt: "2026-06-18", rca: "No lazy loading or skeleton states ï¿½ charts block render on slow network.", workaround: "None ï¿½ charts fail to load for users on slow connections.", lessonsLearned: "Implement skeleton loading states for all chart components." },
+  { id: "5", defectId: "BUG-1019", summary: "Export CSV truncates rows > 10,000 records", severity: "major", status: "closed", project: "Analytics Dashboard", assignee: "Dev: Kiran Rao", createdAt: "2026-06-14", rca: "CSV export hard-coded limit of 10k rows; not documented in UI.", workaround: "Use date-range filters to export in batches under 10k rows.", lessonsLearned: "Document all export limits in UI; implement streaming for large exports." },
+  { id: "6", defectId: "BUG-1055", summary: "Search autocomplete returns stale results after profile update", severity: "minor", status: "reopened", project: "E-Commerce v3.2", assignee: "Dev: Arjun Mehta", createdAt: "2026-06-26", rca: "Redis cache not invalidated on profile update.", workaround: "Hard refresh browser to clear local cache.", lessonsLearned: "Cache invalidation strategy must be part of feature design review." },
 ];
 
 const SAMPLE_TEMPLATES: Template[] = [
@@ -169,7 +164,7 @@ const severityCfg: Record<Severity, { label: string; cls: string }> = {
   critical: { label: "Critical", cls: "bg-red-500/20 text-red-400 border border-red-500/30" },
   major: { label: "Major", cls: "bg-orange-500/20 text-orange-400 border border-orange-500/30" },
   minor: { label: "Minor", cls: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" },
-  blocker: { label: "Trivial", cls: "bg-slate-500/20 text-slate-400 border border-slate-500/30" },
+  trivial: { label: "Trivial", cls: "bg-slate-500/20 text-slate-400 border border-slate-500/30" },
 };
 const taskStatusCfg: Record<TaskStatus, { label: string; cls: string }> = {
   "todo": { label: "To Do", cls: "bg-slate-500/20 text-slate-400 border border-slate-500/30" },
@@ -536,7 +531,7 @@ function Dashboard({ tasks, defects, meetings, projects, templates, activities }
               <div key={d.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/60 transition-colors">
                 <SBadge s={d.severity} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-mono text-indigo-400">{d.jiraTicket}</div>
+                  <div className="text-[11px] font-mono text-indigo-400">{d.defectId}</div>
                   <div className="text-[10px] text-muted-foreground truncate">{d.summary}</div>
                 </div>
               </div>
@@ -686,7 +681,7 @@ function TasksPage({ tasks, onAdd, onUpdate }: { tasks: Task[]; onAdd: (t: Omit<
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Title *</label>
-                <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Task title" value={draft.title || ""} onChange={e => setDraft({ ...draft, title: e.target.value })} />
+                <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Task titleï¿½" value={draft.title || ""} onChange={e => setDraft({ ...draft, title: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -708,7 +703,7 @@ function TasksPage({ tasks, onAdd, onUpdate }: { tasks: Task[]; onAdd: (t: Omit<
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-                <textarea rows={3} className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none" placeholder="Task details" value={draft.description || ""} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+                <textarea rows={3} className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none" placeholder="Task detailsï¿½" value={draft.description || ""} onChange={e => setDraft({ ...draft, description: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -1029,32 +1024,20 @@ function MeetingsPage({ meetings }: { meetings: Meeting[] }) {
 
 // --- Defects ------------------------------------------------------------------
 
-function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (d: Omit<Defect, "id">) => void; onUpdate: (id: string, u: Partial<Defect>) => void }) {
+function DefectsPage({ defects }: { defects: Defect[] }) {
   const [selected, setSelected] = useState<Defect | null>(null);
   const [filter, setFilter] = useState<"all" | DefectStatus>("all");
-  const [showAdd, setShowAdd] = useState(false);
-  const [draft, setDraft] = useState<Partial<Defect>>({
-    severity: "minor",
-    status: "open",
-    project: "E-Commerce v3.2",
-    foundIn: "QA"
-  });
   const filtered = filter === "all" ? defects : defects.filter(d => d.status === filter);
-  
+
   return (
     <div className="flex h-full overflow-hidden">
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-xl font-semibold">Defects</h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5">{defects.filter(d => d.status === "open").length} open  {defects.filter(d => d.severity === "critical" && d.status === "open").length} critical</p>
+            <p className="text-[13px] text-muted-foreground mt-0.5">{defects.filter(d => d.status === "open").length} open ï¿½ {defects.filter(d => d.severity === "critical").length} critical</p>
           </div>
-          <button
-  onClick={() => setShowAdd(true)}
-  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[13px] font-semibold transition-colors"
->
-  <Plus className="w-4 h-4" /> Report Defect
-</button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[13px] font-semibold transition-colors"><Plus className="w-4 h-4" /> Report Defect</button>
         </div>
         <div className="flex flex-wrap gap-1.5 mb-4">
           {(["all", "open", "in-progress", "resolved", "closed", "reopened"] as const).map(f => (
@@ -1071,7 +1054,7 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
             <tbody>
               {filtered.map(d => (
                 <tr key={d.id} onClick={() => setSelected(selected?.id === d.id ? null : d)} className={`border-b border-border last:border-0 hover:bg-accent/30 cursor-pointer transition-colors ${selected?.id === d.id ? "bg-red-600/5" : ""}`}>
-                  <td className="px-4 py-3 text-xs font-mono text-indigo-400 font-semibold">{d.jiraTicket}</td>
+                  <td className="px-4 py-3 text-xs font-mono text-indigo-400 font-semibold">{d.defectId}</td>
                   <td className="px-4 py-3 text-[13px] font-medium max-w-xs">{d.summary}</td>
                   <td className="px-4 py-3"><SBadge s={d.severity} /></td>
                   <td className="px-4 py-3"><DSBadge s={d.status} /></td>
@@ -1087,21 +1070,14 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
       {selected && (
         <div className="w-72 border-l border-border bg-card p-5 overflow-y-auto flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
-  {selected.jiraLink ? (
-    <a href={selected.jiraLink} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-indigo-400 font-semibold hover:underline">
-      {selected.jiraTicket}
-    </a>
-  ) : (
-    <span className="text-xs font-mono text-indigo-400 font-semibold">{selected.jiraTicket}</span>
-  )}
-  <button onClick={() => setSelected(null)}><X className="w-4 h-4 text-muted-foreground hover:text-foreground" /></button>
-</div>
+            <span className="text-xs font-mono text-indigo-400 font-semibold">{selected.defectId}</span>
+            <button onClick={() => setSelected(null)}><X className="w-4 h-4 text-muted-foreground hover:text-foreground" /></button>
+          </div>
           <p className="text-[13px] font-semibold mb-3 leading-snug">{selected.summary}</p>
           <div className="flex gap-2 mb-4"><SBadge s={selected.severity} /><DSBadge s={selected.status} /></div>
-          <div className="text-xs text-muted-foreground mb-4">{selected.project} - {selected.assignee}</div>
+          <div className="text-xs text-muted-foreground mb-4">{selected.project} ï¿½ {selected.assignee}</div>
           <div className="space-y-4">
             {[
-              { label: "Description", text: selected.description, cls: "bg-accent/50" },
               { label: "Root Cause Analysis", text: selected.rca, cls: "bg-accent/50" },
               { label: "Workaround", text: selected.workaround, cls: "bg-accent/50" },
               { label: "Lessons Learned", text: selected.lessonsLearned, cls: "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300/80" },
@@ -1114,86 +1090,6 @@ function DefectsPage({ defects, onAdd, onUpdate }: { defects: Defect[]; onAdd: (
           </div>
         </div>
       )}
-
-      {showAdd && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAdd(false)}>
-    <div className="bg-popover border border-border rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="font-semibold">Report Defect</h3>
-        <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-muted-foreground" /></button>
-      </div>
-      <div className="space-y-3">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Jira Ticket *</label>
-          <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="BUG-1042" value={draft.jiraTicket || ""} onChange={e => setDraft({ ...draft, jiraTicket: e.target.value })} />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Jira Link</label>
-          <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" placeholder="https://..." value={draft.jiraLink || ""} onChange={e => setDraft({ ...draft, jiraLink: e.target.value })} />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Summary *</label>
-          <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" placeholder="Short defect summary" value={draft.summary || ""} onChange={e => setDraft({ ...draft, summary: e.target.value })} />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Assignee *</label>
-          <input className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" placeholder="Assigned to" value={draft.assignee || ""} onChange={e => setDraft({ ...draft, assignee: e.target.value })} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Severity</label>
-            <select className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" value={draft.severity} onChange={e => setDraft({ ...draft, severity: e.target.value as Defect["severity"] })}>
-              {(["critical", "major", "minor", "blocker"] as const).map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Found In</label>
-            <select className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" value={draft.foundIn} onChange={e => setDraft({ ...draft, foundIn: e.target.value as Defect["foundIn"] })}>
-              {(["Dev", "QA", "Staging", "Prod"] as const).map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Project</label>
-          <select className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none" value={draft.project} onChange={e => setDraft({ ...draft, project: e.target.value })}>
-            {SAMPLE_PROJECTS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-          <textarea rows={3} className="w-full bg-accent/50 border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none resize-none" placeholder="Steps to reproduce" value={draft.description || ""} onChange={e => setDraft({ ...draft, description: e.target.value })} />
-        </div>
-      </div>
-      <div className="flex gap-2 mt-4">
-        <button onClick={() => setShowAdd(false)} className="flex-1 py-2 bg-accent/60 hover:bg-accent rounded-lg text-[13px] transition-colors">Cancel</button>
-        <button
-          onClick={() => {
-            if (draft.jiraTicket && draft.summary) {
-              onAdd({
-                jiraTicket: draft.jiraTicket,
-                jiraLink: draft.jiraLink || "",
-                summary: draft.summary,
-                severity: draft.severity || "minor",
-                status: "open",
-                project: draft.project || SAMPLE_PROJECTS[0].name,
-                foundIn: draft.foundIn || "QA",
-                assignee: draft.assignee || "Unassigned",
-                createdAt: new Date().toISOString().slice(0, 10),
-                rca: draft.rca || "",
-                workaround: draft.workaround || "",
-                lessonsLearned: draft.lessonsLearned || "",
-                description: draft.description || "",
-              });
-              setShowAdd(false);
-              setDraft({ severity: "minor", status: "open", project: "E-Commerce v3.2", foundIn: "QA" });
-            }
-          }}
-          className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[13px] font-semibold transition-colors"
-        >Add Defect</button>
-      </div>
-    </div>
-  </div>
-)}
     </div>
   );
 }
@@ -1423,7 +1319,6 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [defects, setDefects] = useState<Defect[]>([]);
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
@@ -1432,40 +1327,29 @@ export default function App() {
   }, [dark]);
   // Load data from database
   const loadData = async () => {
-  try {
-    const dbTasks = await getTasks();
-    const mappedTasks: Task[] = dbTasks.map(t => ({ ...t, id: String(t.id) }));
-    setTasks(mappedTasks);
+    try {
+      const dbTasks = await getTasks();
+      // Map database tasks to app Task format
+      const mappedTasks: Task[] = dbTasks.map(t => ({
+        ...t,
+        id: String(t.id)
+      }));
+      setTasks(mappedTasks);
 
-    const dbActivities = await getActivities();
-    const mappedActivities: ActivityEntry[] = dbActivities.map(a => ({ ...a, id: String(a.id) }));
-    setActivities(mappedActivities);
-
-    const dbDefects = await getDefects();
-    const mappedDefects: Defect[] = dbDefects.map((d: any) => ({
-      id: String(d.id),
-      foundIn: d.foundIn,
-      jiraTicket: d.jiraTicket,
-      jiraLink: d.jiraLink,
-      severity: d.severity ?? "minor",
-      summary: d.summary ?? d.title ?? "No summary provided",
-      status: d.status ?? "open",
-      project: d.project ?? "Unknown",
-      assignee: d.assignee ?? "Unassigned",
-      createdAt: d.createdAt ?? d.updatedAt ?? formatTimestamp(new Date()),
-      rca: d.rca ?? "",
-      workaround: d.workaround ?? "",
-      lessonsLearned: d.lessonsLearned ?? "",
-      description: d.description ?? "",
-    }));
-    setDefects(mappedDefects);
-  } catch (error) {
-    console.error('Failed to load data from database:', error);
-    setTasks(INIT_TASKS);
-    setActivities(SAMPLE_ACTIVITIES);
-    setDefects(SAMPLE_DEFECTS); // fallback only, matches existing pattern
-  }
-};
+      const dbActivities = await getActivities();
+      // Map database activities to app ActivityEntry format
+      const mappedActivities: ActivityEntry[] = dbActivities.map(a => ({
+        ...a,
+        id: String(a.id)
+      }));
+      setActivities(mappedActivities);
+    } catch (error) {
+      console.error('Failed to load data from database:', error);
+      // Fallback to sample data if database fails
+      setTasks(INIT_TASKS);
+      setActivities(SAMPLE_ACTIVITIES);
+    }
+  };
 
   // Load data on initial load
   useEffect(() => {
@@ -1549,27 +1433,6 @@ export default function App() {
   }
 };
 
-  // Defects handlers (basic optimistic handlers to satisfy component props)
-  const handleAddDefect = async (d: Omit<Defect, "id">) => {
-  try {
-    const newId = await addDefect(d);
-    const newDefect: Defect = { ...d, id: String(newId) };
-    setDefects(prev => [...prev, newDefect]);
-  } catch (error) {
-    console.error('Failed to add defect to database:', error);
-  }
-};
-
-const handleUpdateDefect = async (id: string, u: Partial<Defect>) => {
-  try {
-    const { id: _unused, ...updates } = u; // drop id, it's passed separately
-    await updateDefect(Number(id), updates);
-    setDefects(prev => prev.map(d => d.id === id ? { ...d, ...u } : d));
-  } catch (error) {
-    console.error('Failed to update defect in database:', error);
-  }
-};
-
   const renderPage = () => {
     switch (nav) {
       case "dashboard": return <Dashboard tasks={tasks} defects={SAMPLE_DEFECTS} meetings={SAMPLE_MEETINGS} projects={SAMPLE_PROJECTS} templates={SAMPLE_TEMPLATES} activities={activities} />;
@@ -1577,7 +1440,7 @@ const handleUpdateDefect = async (id: string, u: Partial<Defect>) => {
       case "knowledge": return <KnowledgeBasePage entries={SAMPLE_KB} />;
       case "templates": return <MailTemplatesPage templates={SAMPLE_TEMPLATES} />;
       case "meetings": return <MeetingsPage meetings={SAMPLE_MEETINGS} />;
-      case "defects": return <DefectsPage defects={defects} onAdd={handleAddDefect} onUpdate={handleUpdateDefect}/>;
+      case "defects": return <DefectsPage defects={SAMPLE_DEFECTS} />;
       case "projects": return <ProjectsPage projects={SAMPLE_PROJECTS} />;
       case "automation": return <AutomationHubPage />;
       case "activity": return <ActivityLogPage activities={activities} />;
@@ -1596,6 +1459,5 @@ const handleUpdateDefect = async (id: string, u: Partial<Defect>) => {
     </div>
   );
 }
-
 
 
