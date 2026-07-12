@@ -24,6 +24,36 @@ React Hook Form + Zod for forms, React Router for navigation — same
 constraints as before, don't introduce Redux/Zustand/other libraries
 without justification.
 
+## Text & character encoding — STRICT
+This codebase has repeatedly picked up mojibake (e.g. `ï¿½`) and wrong-
+character substitutions (semicolon for comma, stray/duplicate braces or
+divs) from prior agent edits. To prevent this:
+1. Use plain ASCII only in all code, JSX text nodes, strings, and comments.
+   No curly/smart quotes, no em/en dashes, no ellipsis character, no non-
+   breaking spaces, no other typographic Unicode. Use `-` not `—`/`–`,
+   straight `'`/`"` not curly quotes, `...` not `…`, a normal space not
+   U+00A0.
+2. If content copied from a design tool, spec, or another file contains
+   any non-ASCII typographic characters, normalize them to plain ASCII
+   equivalents before writing them into the codebase — never carry them
+   through verbatim.
+3. Every file you write or edit must be valid UTF-8 with no BOM. Do not
+   assume Latin-1/Windows-1252 anywhere in the toolchain.
+4. Before declaring a task finished, re-open any file you edited and scan
+   it for `\uFFFD`, `ï¿½`, or any non-ASCII character outside of strings
+   that intentionally need it (e.g. genuine i18n content, if any). If
+   found, fix it and say so in your response — don't silently patch and
+   move on.
+5. Make edits as small, targeted diffs rather than full-file rewrites.
+   Full-file rewrites are the main source of duplicated braces/divs and
+   dropped closing tags — if you must rewrite a whole file, re-read the
+   result afterward and diff it mentally against the original structure
+   before declaring done.
+6. If you notice mojibake or corrupted characters already present in a
+   file you're touching (even if unrelated to your task), flag it in your
+   response rather than silently leaving it or silently fixing it as a
+   drive-by edit.
+
 ## Session 1 — mandatory first step
 Before wiring any functionality, do an honest structural assessment:
 1. Is the exported code clean, semantic React (reusable components, props,
@@ -93,7 +123,9 @@ that renders UI, not just logic-only files.
 ## Response format
 Summary → Files Modified → Verification output (tsc + build, actual text)
 → Visual impact (did this touch anything that renders UI? if yes, was a
-regression check done?) → Why (short).
+regression check done?) → Encoding check (did you scan for mojibake? any
+found/fixed?) → Why (short).
+A completion summary must be accompanied by git diff --stat output showing which files actually changed. A summary of intended changes without diff evidence is not acceptable
 
 ## If unsure
 Stop. Explain options. Ask before any decision that could affect the UI's

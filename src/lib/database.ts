@@ -1,4 +1,4 @@
-﻿import Dexie, { Table } from 'dexie';
+import Dexie, { Table } from 'dexie';
 
 export interface DbTask {
   id?: number;
@@ -21,15 +21,20 @@ export interface DbActivity {
   details: string;
 }
 
-// Keep the other interfaces for compatibility but we won't use them for tasks/activities
+// Defect interface with new fields
 export interface DbDefect {
   id?: number;
   title: string;
   description: string;
   createdAt: string;
   updatedAt: string;
+  // New fields for QA ownership view
+  foundIn: 'Dev' | 'QA' | 'Staging' | 'Prod';
+  jiraTicket: string;
+  jiraLink?: string;
 }
 
+// We'll keep the other interfaces for compatibility but we won't use them for tasks/activities
 export interface DbMeeting {
   id?: number;
   title: string;
@@ -42,6 +47,18 @@ export interface DbProject {
   id?: number;
   title: string;
   description: string;
+  status: 'active' | 'planning' | 'completed' | 'on-hold';
+  progress: number;
+  totalTests: number;
+  passedTests: number;
+  failedTests: number;
+  blockedTests: number;
+  defectsOpen: number;
+  defectsClosed: number;
+  releaseDate: string;
+  version: string;
+  referenceTitle: string;
+  referenceUrl: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,6 +79,25 @@ class QANexusDatabase extends Dexie {
       projects: '++id, title, description, createdAt, updatedAt',
       activities: '++id, action, module, timestamp, details',
     });
+    this.version(2).stores({
+      tasks: '++id, title, description, priority, status, dueDate, project, tags, createdAt, updatedAt',
+      defects: '++id, title, description, createdAt, updatedAt, foundIn, jiraTicket, jiraLink',
+      meetings: '++id, title, description, createdAt, updatedAt',
+      projects: '++id, title, description, status, progress, totalTests, passedTests, failedTests, blockedTests, releaseDate, version, referenceTitle, referenceUrl, createdAt, updatedAt',
+      activities: '++id, action, module, timestamp, details',
+    });
+  }
+
+  upgrade(txn: Dexie.Transaction, oldVersion: number, newVersion: number) {
+    if (oldVersion < 2) {
+      // Migration from version 1 to 2
+      txn.table('defects').toCollection().modify(defect => {
+        // Set default values for new fields
+        if (defect.foundIn === undefined) defect.foundIn = 'QA';
+        if (defect.jiraTicket === undefined) defect.jiraTicket = '';
+        // jiraLink is optional, no default needed
+      });
+    }
   }
 }
 
@@ -87,6 +123,26 @@ export async function deleteTask(id: number): Promise<void> {
   await db.tasks.delete(id);
 }
 
+// Defect CRUD operations
+export async function getDefects(): Promise<DbDefect[]> {
+  return await db.defects.toArray();
+}
+
+export async function addDefect(defect: Omit<DbDefect, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+  const now = new Date().toISOString();
+  const defectWithTimestamps = { ...defect, createdAt: now, updatedAt: now };
+  return await db.defects.add(defectWithTimestamps);
+}
+
+export async function updateDefect(id: number, updates: Partial<DbDefect>): Promise<void> {
+  const updatesWithTimestamp = { ...updates, updatedAt: new Date().toISOString() };
+  await db.defects.update(id, updatesWithTimestamp);
+}
+
+export async function deleteDefect(id: number): Promise<void> {
+  await db.defects.delete(id);
+}
+
 // Activity operations
 export async function getActivities(): Promise<DbActivity[]> {
   return await db.activities.orderBy('timestamp').reverse().toArray(); // Most recent first
@@ -103,6 +159,26 @@ export async function addActivity(activity: Omit<DbActivity, 'id'>): Promise<num
     await db.activities.bulkDelete(ids.filter((id): id is number => id !== undefined));
   }
   return id;
+}
+
+// Project CRUD operations
+export async function getProjects(): Promise<DbProject[]> {
+  return await db.projects.toArray();
+}
+
+export async function addProject(project: Omit<DbProject, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+  const now = new Date().toISOString();
+  const projectWithTimestamps = { ...project, createdAt: now, updatedAt: now };
+  return await db.projects.add(projectWithTimestamps);
+}
+
+export async function updateProject(id: number, updates: Partial<DbProject>): Promise<void> {
+  const updatesWithTimestamp = { ...updates, updatedAt: new Date().toISOString() };
+  await db.projects.update(id, updatesWithTimestamp);
+}
+
+export async function deleteProject(id: number): Promise<void> {
+  await db.projects.delete(id);
 }
 
 // Export all data from the database as JSON
@@ -148,4 +224,3 @@ export async function importDatabase(jsonData: string | Record<string, unknown>)
     throw error;
   }
 }
-
